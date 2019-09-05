@@ -1,0 +1,8 @@
+STATUS = 'status'
+BACKLOG = 'backlog'
+UPCOMING = 'upcoming'
+WIP = 'wip'
+BLOCKED = 'blocked'
+DONE = 'done'
+TITLE = 'title'
+ID = 'id'
