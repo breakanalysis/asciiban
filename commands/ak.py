@@ -23,8 +23,10 @@ def delete():
     pass
 
 @click.command()
-def update():
-    pass
+@click.argument("query_body")
+@click.argument("lambda_body")
+def update(query_body, lambda_body):
+    update_cmd(query_body, lambda_body)
 
 ak.add_command(show)
 ak.add_command(create)

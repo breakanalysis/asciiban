@@ -66,3 +66,10 @@ def create_cmd(title, lambda_body=None):
     with open(issue_path, 'w') as f:
         json_str = json.dumps(issue, default=json_convert, indent=2)
         f.write(json_str)
+
+def update_cmd(query_body, lambda_body):
+    for issue in matching_issues(query_body):
+        apply_udf(lambda_body, issue)
+
+def delete_cmd(query_body):
+
