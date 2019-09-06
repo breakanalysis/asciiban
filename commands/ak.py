@@ -1,7 +1,7 @@
 from datetime import timedelta
 from datetime import datetime
 import click
-from .commands import show_cmd
+from .commands import show_cmd, create_cmd
 
 @click.group()
 def ak():
@@ -13,8 +13,10 @@ def show(lambda_body):
     show_cmd(lambda_body)
 
 @click.command()
-def create():
-    pass
+@click.argument("title")
+@click.argument("lambda_body", required=False)
+def create(title, lambda_body=None):
+    create_cmd(title, lambda_body)
 
 @click.command()
 def delete():
