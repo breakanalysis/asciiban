@@ -9,7 +9,7 @@ def render_kanban(issues, statuses=None, box_width=15, box_rows=3):
     for issue in issues:
         if STATUS in issue.keys() and issue[STATUS] in statuses:
             rows[issue[STATUS]].append(render_issue(issue, box_width, box_rows))
-            status_counter.update(issue[STATUS])
+            status_counter[issue[STATUS]] += 1
     hline = (1 + len(statuses)*(1 + box_width)) * '-'
     lines = [hline]
     status_line = '|' + '|'.join([render_text(status, box_width) for status in statuses]) + '|'
@@ -34,7 +34,7 @@ def render_text(text, box_width):
     return left_pad + truncated + right_pad
 
 def render_issue(issue, box_width, box_rows):
-    rows = [render_text(issue[ID], box_width)]
+    rows = [render_text(str(issue[ID]), box_width)]
     title = issue[TITLE]
     for row_i in range(1, box_rows):
         rows.append(render_text(title[(row_i-1)*box_width:row_i*box_width], box_width))
