@@ -23,20 +23,25 @@ def issues():
 def unescape(lambda_body):
     return lambda_body
 
-def matching_issues(lambda_body):
-    matcher = compile_lambda(lambda_body)
+def matching_issues(query_body):
+    matcher = compile_lambda(query_body)
     return filter(matcher, issues())
 
-def compile_lambda(lambda_body):
-    return eval('lambda x: ' + unescape(lambda_body))
+def compile_lambda(query_body):
+    return eval('lambda x: ' + unescape(query_body))
 
 def apply_udf(function_body, x):
     return exec(unescape(function_body))
             
-def show_cmd(lambda_body):
-    # print(list(matching_issues(lambda_body)))
-    for line in render_kanban(issues()):
+def show_cmd(query_body):
+    for line in render_kanban(matching_issues(query_body)):
         print(line)
+
+def show_issues_cmd(query_body):
+    print(100 * '*')
+    for issue in matching_issues(query_body):
+        print(issue)
+        print(100 * '*')
 
 def format_date(date):
     return date.strftime(DATE_FORMAT)
@@ -72,4 +77,7 @@ def update_cmd(query_body, lambda_body):
         apply_udf(lambda_body, issue)
 
 def delete_cmd(query_body):
-
+    issue_dir = os.path.join(os.getcwd(), 'issues')
+    for issue in matching_issues(query_body):
+        path = os.path.join(issue_dir, str(issue[ID]))
+        os.remove(path)
