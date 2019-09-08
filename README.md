@@ -7,8 +7,11 @@ The 'status' key has predefined usage as columns of a kanban board.
 A kanban layout is given by an ordered list of column names, but by default the list
 is ['backlog', 'selected', 'wip', 'blocked', 'done'].
 
-TODO: handle separate location of python code and issues/
 TODO: add max rows for kanban board and crud operations for the kanban boards.
+TODO: handle no issues dir
+TODO: implement escape sequences for dates
+TODO: nicer and more flexible views for the issues themselves
+TODO: implement priority field and sorting function(s)
 
 Each command is a selection followed by a command.
 
@@ -20,25 +23,28 @@ Install:
 ```
 # get python 3
 pip install -r requirements.txt
+clone this repo
+chmod +x ab.py
+alias ab="/path/to/ab.py"
 ```
 
 
 Usage:
 
 ```
-python -m commands.ak show QUERY
-python -m commands.ak show-issues QUERY
-python -m commands.ak delete QUERY
-python -m commands.ak update QUERY LAMBDA
-python -m commands.ak create TITLE [LAMBDA]
+ab show QUERY
+ab show-issues QUERY
+ab delete QUERY
+ab update QUERY LAMBDA
+ab create TITLE [LAMBDA]
 ```
 
 Examples:
 
 ```
-python -m commands.ak show 'date>\today'
-python -m commands.ak show-issues 1
-python -m commands.ak delete 'status=done'
-python -m commands.ak update 'x.due_date+=timedelta(day=1)' 'x.importance>=3'
-python -m commands.ak create 'my_title' 'x.date=\today'
+ab show 'date>\today'
+ab show-issues 1
+ab delete 'status=done'
+ab update 'x.due_date+=timedelta(day=1)' 'x.importance>=3'
+ab create 'my_title' 'x.date=\today'
 ```

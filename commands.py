@@ -3,7 +3,7 @@ import glob
 import json
 from datetime import datetime as dt
 from datetime import timedelta as td
-from render.render import render_kanban
+from render import render_kanban
 from constants import TITLE, CREATED, DATE_FORMAT, ID, STATUS, BACKLOG
 
 def issue_files():

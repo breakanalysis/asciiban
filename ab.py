@@ -1,10 +1,11 @@
+#!/usr/bin/env python3
 from datetime import timedelta
 from datetime import datetime
 import click
-from .commands import show_cmd, create_cmd, update_cmd, delete_cmd, show_issues_cmd
+from commands import show_cmd, create_cmd, update_cmd, delete_cmd, show_issues_cmd
 
 @click.group()
-def ak():
+def ab():
     pass
 
 @click.command()
@@ -34,11 +35,11 @@ def delete(query_body):
 def update(query_body, lambda_body):
     update_cmd(query_body, lambda_body)
 
-ak.add_command(show)
-ak.add_command(show_issues)
-ak.add_command(create)
-ak.add_command(delete)
-ak.add_command(update)
+ab.add_command(show)
+ab.add_command(show_issues)
+ab.add_command(create)
+ab.add_command(delete)
+ab.add_command(update)
 
 if __name__=='__main__':
-    ak()
+    ab()
