@@ -6,8 +6,14 @@ from datetime import timedelta as td
 from render import render_kanban
 from constants import TITLE, CREATED, DATE_FORMAT, ID, STATUS, BACKLOG
 
-def issue_files():
+def get_issue_dir():
     issue_dir = os.path.join(os.getcwd(), 'issues')
+
+def get_issue_path():
+    return os.path.join(get_issue_dir(), str(issue[ID]))
+
+def issue_files():
+    issue_dir = get_issue_dir()
     if not os.path.exists(issue_dir):
         return []
     return [filename for filename in glob.iglob(os.path.join(issue_dir, '**'), recursive=True) if os.path.isfile(filename)]
@@ -64,10 +70,13 @@ def create_cmd(title, lambda_body=None):
     issue = {TITLE: title, CREATED: format_date(dt.utcnow()), ID: id, STATUS: BACKLOG}
     if lambda_body is not None:
         apply_udf(lambda_body, issue)
-    issue_dir = os.path.join(os.getcwd(), 'issues')
+    issue_dir = get_issue_dir()
     if not os.path.exists(issue_dir):
         os.mkdir(issue_dir)
     issue_path = os.path.join(issue_dir, str(id))
+    write_issue(issue, issue_path)
+
+def write_issue(issue, issue_path):
     with open(issue_path, 'w') as f:
         json_str = json.dumps(issue, default=json_convert, indent=2)
         f.write(json_str)
@@ -75,9 +84,9 @@ def create_cmd(title, lambda_body=None):
 def update_cmd(query_body, lambda_body):
     for issue in matching_issues(query_body):
         apply_udf(lambda_body, issue)
+        write_issue(issue, get_issue_path(issue)
 
 def delete_cmd(query_body):
-    issue_dir = os.path.join(os.getcwd(), 'issues')
     for issue in matching_issues(query_body):
-        path = os.path.join(issue_dir, str(issue[ID]))
+        path = get_issue_path(issue)
         os.remove(path)
