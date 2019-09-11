@@ -1,5 +1,6 @@
 from collections import defaultdict, Counter
 from constants import ID, STATUS, BACKLOG, UPCOMING, WIP, BLOCKED, DONE, TITLE
+from textwrap import wrap
 
 def render_kanban(issues, statuses=None, box_width=15, box_rows=3):
     if statuses==None:
@@ -10,14 +11,16 @@ def render_kanban(issues, statuses=None, box_width=15, box_rows=3):
         if STATUS in issue.keys() and issue[STATUS] in statuses:
             rows[issue[STATUS]].append(render_issue(issue, box_width, box_rows))
             status_counter[issue[STATUS]] += 1
-    hline = (1 + len(statuses)*(1 + box_width)) * '-'
+    hline = (1 + len(statuses)*(3 + box_width)) * '-'
     lines = [hline]
-    status_line = '|' + '|'.join([render_text(status, box_width) for status in statuses]) + '|'
+    status_line = '| ' + ' | '.join([render_text(status, box_width) for status in statuses]) + ' |'
     lines.append(status_line)
     lines.append(hline)
+    if len(status_counter) == 0:
+        return lines
     for height in range(max(status_counter.values())):
         for sub_row in range(box_rows):
-            line = '|' + '|'.join([fill_missing(rows[status], height, box_width, sub_row) for status in statuses]) + '|'
+            line = '| ' + ' | '.join([fill_missing(rows[status], height, box_width, sub_row) for status in statuses]) + ' |'
             lines.append(line)
         lines.append(hline)
     return lines
@@ -36,6 +39,7 @@ def render_text(text, box_width):
 def render_issue(issue, box_width, box_rows):
     rows = [render_text(str(issue[ID]), box_width)]
     title = issue[TITLE]
-    for row_i in range(1, box_rows):
-        rows.append(render_text(title[(row_i-1)*box_width:row_i*box_width], box_width))
+    content = wrap(title, box_width)[:box_rows - 1]
+    rows.extend([render_text(t, box_width) for t in content])
+    rows.extend([box_width * ' ' for _ in range(box_rows - len(rows))])
     return rows

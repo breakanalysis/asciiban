@@ -23,7 +23,7 @@ def issue_files():
 def get_issue_dir():
     return os.path.join(os.getcwd(), 'issues')
 
-def get_issue_path():
+def get_issue_path(issue):
     return os.path.join(get_issue_dir(), str(issue[ID]))
 
 def write_issue(issue, issue_path):
