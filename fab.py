@@ -4,7 +4,7 @@ from datetime import datetime
 import click
 from commands import (
         show_cmd, create_cmd, update_cmd, delete_cmd,
-        show_issues_cmd, tag_cmd
+        show_issues_cmd, tag_cmd, subtask_cmd
         )
 
 @click.group()
@@ -43,9 +43,15 @@ def update(query_body, lambda_body):
 def tag(query_body, tag):
     tag_cmd(query_body, tag)
 
+@click.command()
+@click.argument("parent_id", type=int)
+@click.argument("subtask_id", type=int)
+def subtask(parent_id, subtask_id):
+    subtask_cmd(parent_id, subtask_id)
+
 for command in [
         show, show_issues, create, delete,
-        update, tag]:
+        update, tag, subtask]:
     fab.add_command(command)
 
 if __name__=='__main__':

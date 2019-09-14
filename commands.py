@@ -21,12 +21,14 @@ def issue_files():
         return []
     return [filename for filename in glob.iglob(os.path.join(issue_dir, '**'), recursive=True) if os.path.isfile(filename)]
 
-def get_issue_path(issue):
-    id = str(issue[ID])
+def get_id_path(id):
     for filename in glob.iglob(os.path.join(issue_dir, '**'), recursive=True):
-        if os.path.isfile(filename) and id == os.path.basename(filename):
+        if os.path.isfile(filename) and str(id) == os.path.basename(filename):
             return filename
     raise Exception(f"Issue not found {id}")
+
+def get_issue_path(issue):
+    return get_id_path(issue[ID])
 
 def write_issue(issue, issue_path):
     with open(issue_path, 'w') as f:
@@ -81,6 +83,7 @@ def create_cmd(title, lambda_body=None):
         os.mkdir(issue_dir)
     issue_path = os.path.join(issue_dir, str(id))
     write_issue(issue, issue_path)
+    print(f"Created issue {id}")
 
 def delete_cmd(query_body):
     for issue in matching_issues(query_body):
@@ -100,3 +103,12 @@ def tag_issue(issue, tag):
 def tag_cmd(query_body, tag):
     for issue in matching_issues(query_body):
         tag_issue(issue, tag)
+
+def subtask_cmd(parent_id, subtask_id):
+    parent_path = get_id_path(parent_id)
+    subtask_directory = parent_path + '.d'
+    if not os.path.exists(subtask_directory):
+        os.mkdir(subtask_directory)
+    subtask_current_path = get_id_path(subtask_id)
+    subtask_path = os.path.join(subtask_directory, str(subtask_id))
+    os.rename(subtask_current_path, subtask_path)
