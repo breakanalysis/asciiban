@@ -105,8 +105,11 @@ def tag_cmd(query_body, tag):
         tag_issue(issue, tag)
 
 def subtask_cmd(parent_id, subtask_id):
-    parent_path = get_id_path(parent_id)
-    subtask_directory = parent_path + '.d'
+    if parent_id == 0:
+        subtask_dirctory = issue_dir
+    else:
+        parent_path = get_id_path(parent_id)
+        subtask_directory = parent_path + '.d'
     if not os.path.exists(subtask_directory):
         os.mkdir(subtask_directory)
     subtask_current_path = get_id_path(subtask_id)

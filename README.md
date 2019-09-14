@@ -32,11 +32,7 @@ alias ab="/path/to/ab.py"
 Usage:
 
 ```
-fab show QUERY
-fab show-issues QUERY
-fab delete QUERY
-fab update QUERY LAMBDA
-fab create TITLE [LAMBDA]
+fab --help
 ```
 
 Examples:
