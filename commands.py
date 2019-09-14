@@ -6,6 +6,8 @@ from datetime import timedelta as td
 from render import render_kanban
 from constants import TITLE, CREATED, DATE_FORMAT, ID, STATUS, BACKLOG
 
+issue_dir = os.path.join(os.getcwd(), 'issues')
+
 def issues():
     return [parse_issue_file(filename) for filename in issue_files()]
 
@@ -15,16 +17,16 @@ def parse_issue_file(filename):
     return issue
 
 def issue_files():
-    issue_dir = get_issue_dir()
     if not os.path.exists(issue_dir):
         return []
     return [filename for filename in glob.iglob(os.path.join(issue_dir, '**'), recursive=True) if os.path.isfile(filename)]
 
-def get_issue_dir():
-    return os.path.join(os.getcwd(), 'issues')
-
 def get_issue_path(issue):
-    return os.path.join(get_issue_dir(), str(issue[ID]))
+    id = str(issue[ID])
+    for filename in glob.iglob(os.path.join(issue_dir, '**'), recursive=True):
+        if os.path.isfile(filename) and id == os.path.basename(filename):
+            return filename
+    raise Exception(f"Issue not found {id}")
 
 def write_issue(issue, issue_path):
     with open(issue_path, 'w') as f:
@@ -75,7 +77,6 @@ def create_cmd(title, lambda_body=None):
     issue = {TITLE: title, CREATED: format_date(dt.utcnow()), ID: id, STATUS: BACKLOG}
     if lambda_body is not None:
         apply_udf(lambda_body, issue)
-    issue_dir = get_issue_dir()
     if not os.path.exists(issue_dir):
         os.mkdir(issue_dir)
     issue_path = os.path.join(issue_dir, str(id))
