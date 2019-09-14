@@ -90,3 +90,12 @@ def update_cmd(query_body, lambda_body):
     for issue in matching_issues(query_body):
         apply_udf(lambda_body, issue)
         write_issue(issue, get_issue_path(issue))
+
+def tag_issue(issue, tag):
+    if 'tags' not in issue:
+        issue['tags'] = set()
+    issue['tags'].add(tag)
+
+def tag_cmd(query_body, tag):
+    for issue in matching_issues(query_body):
+        tag_issue(issue, tag)

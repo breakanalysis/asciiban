@@ -32,19 +32,19 @@ alias ab="/path/to/ab.py"
 Usage:
 
 ```
-ab show QUERY
-ab show-issues QUERY
-ab delete QUERY
-ab update QUERY LAMBDA
-ab create TITLE [LAMBDA]
+fab show QUERY
+fab show-issues QUERY
+fab delete QUERY
+fab update QUERY LAMBDA
+fab create TITLE [LAMBDA]
 ```
 
 Examples:
 
 ```
-ab show 'date>\today'
-ab show-issues 1
-ab delete 'status=done'
-ab update 'x.due_date+=timedelta(day=1)' 'x.importance>=3'
-ab create 'my_title' 'x.date=\today'
+fab show 'date>\today'
+fab show-issues 1
+fab delete 'status=done'
+fab update 'x.due_date+=timedelta(day=1)' 'x.importance>=3'
+fab create 'my_title' 'x.date=\today'
 ```
