@@ -8,3 +8,4 @@ TITLE = 'title'
 ID = 'id'
 CREATED = 'created'
 DATE_FORMAT = '%y-%m-%d %H:%M:%S'
+INDENT = 2

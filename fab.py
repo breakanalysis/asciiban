@@ -22,10 +22,9 @@ def show(query_body):
     show_cmd(query_body)
 
 @click.command()
-@click.argument("title")
 @click.argument("lambda_body", required=False)
-def create(title, lambda_body=None):
-    create_cmd(title, lambda_body)
+def create(lambda_body=None):
+    create_cmd(lambda_body)
 
 @click.command()
 @click.argument("query_body")

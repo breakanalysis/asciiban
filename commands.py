@@ -4,7 +4,9 @@ import json
 from datetime import datetime as dt
 from datetime import timedelta as td
 from render import render_kanban
-from constants import TITLE, CREATED, DATE_FORMAT, ID, STATUS, BACKLOG
+from tempfile import NamedTemporaryFile
+import subprocess
+from constants import TITLE, CREATED, DATE_FORMAT, ID, STATUS, BACKLOG, INDENT
 
 issue_dir = os.path.join(os.getcwd(), 'issues')
 
@@ -32,7 +34,7 @@ def get_issue_path(issue):
 
 def write_issue(issue, issue_path):
     with open(issue_path, 'w') as f:
-        json_str = json.dumps(issue, default=json_convert, indent=2)
+        json_str = json.dumps(issue, default=json_convert, indent=INDENT)
         f.write(json_str)
 
 def unescape(lambda_body):
@@ -72,18 +74,48 @@ def show_issues_cmd(query_body):
         print(issue)
         print(100 * '*')
 
-def create_cmd(title, lambda_body=None):
+def create_cmd(lambda_body=None):
+    tmp = NamedTemporaryFile('w')
+    template = {'title': '', 'status': BACKLOG, 'description': '', 'tags': [], 'parent_id': 0}
+    tmp.file.write(json.dumps(template, indent=INDENT))
+    tmp.file.flush()
+    user_issue = _input_user_issue(tmp.name)
+    if user_issue == None:
+        print("Did not create issue.")
+        return
+    tmp.close()
     ids = [id_from_filename(filename) for filename in issue_files()]
     last_id = 0 if len(ids) == 0 else max(ids)
     id = last_id + 1
-    issue = {TITLE: title, CREATED: format_date(dt.utcnow()), ID: id, STATUS: BACKLOG}
+    user_issue.update({CREATED: format_date(dt.utcnow()), ID: id})
+    parent_id = user_issue['parent_id']
+    del user_issue['parent_id']
     if lambda_body is not None:
-        apply_udf(lambda_body, issue)
+        apply_udf(lambda_body, user_issue)
     if not os.path.exists(issue_dir):
         os.mkdir(issue_dir)
-    issue_path = os.path.join(issue_dir, str(id))
-    write_issue(issue, issue_path)
-    print(f"Created issue {id}")
+    subtask_path = _subtask_path(parent_id, id)
+    write_issue(user_issue, subtask_path)
+    print(f"Created issue {id} at {subtask_path}")
+
+def _input_user_issue(path):
+    subprocess.run(['vim', path])
+    with open(path, 'r') as fin:
+        edited_contents = fin.read()
+    if not edited_contents.isspace():
+        try:
+            user_json = json.loads(edited_contents)
+        except Exception as e:
+            print("Not valid json, please try again.")
+            input("Press ENTER to continue.")
+            _input_user_issue(path)
+        if 'title' not in user_json or not isinstance(user_json['title'], str) or user_json['title'] == '':
+            print("Must use non-empty string value for attribute title.")
+            input("Press ENTER to continue.")
+            _input_user_issue(path)
+        return user_json
+    else:
+        return None
 
 def delete_cmd(query_body):
     for issue in matching_issues(query_body):
@@ -105,13 +137,15 @@ def tag_cmd(query_body, tag):
         tag_issue(issue, tag)
 
 def subtask_cmd(parent_id, subtask_id):
+    subtask_current_path = get_id_path(subtask_id)
+    os.rename(subtask_current_path, _subtask_path(parent_id, subtask_id))
+
+def _subtask_path(parent_id, subtask_id):
     if parent_id == 0:
-        subtask_dirctory = issue_dir
+        subtask_directory = issue_dir
     else:
         parent_path = get_id_path(parent_id)
         subtask_directory = parent_path + '.d'
     if not os.path.exists(subtask_directory):
         os.mkdir(subtask_directory)
-    subtask_current_path = get_id_path(subtask_id)
-    subtask_path = os.path.join(subtask_directory, str(subtask_id))
-    os.rename(subtask_current_path, subtask_path)
+    return os.path.join(subtask_directory, str(subtask_id))
