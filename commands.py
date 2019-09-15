@@ -37,25 +37,48 @@ def write_issue(issue, issue_path):
         json_str = json.dumps(issue, default=json_convert, indent=INDENT)
         f.write(json_str)
 
-def unescape(lambda_body):
-    return lambda_body
-
 def format_date(date):
     return date.strftime(DATE_FORMAT)
 
 def parse_date(date_str):
     return dt.strptime(date_str, DATE_FORMAT)
 
-def matching_issues(query_body):
-    matcher = compile_lambda(query_body)
-    return filter(matcher, issues())
+def matching_issues(args):
+    return (issue for issue in issues() if match_issue(issue, args))
 
-def compile_lambda(query_body):
-    return eval('lambda x: ' + unescape(query_body))
+def match_issue(issue, args):
+    return all([
+        match_id(issue, args.id),
+        match_status(issue, args.status),
+        match_tags(issue, args.tags),
+        match_created(issue, args.created),
+        match_ancestor(issue, args.ancestor),
+        match_title(issue, args.title),
+        match_description(issue, args.description),
+        match_text(issue, args.text),
+        match_parent(issue, args.parent)
+    ])
 
-def apply_udf(function_body, x):
-    return exec(unescape(function_body))
-            
+def match_id(issue, args.id):
+    return issue['id'] == args.id
+
+def match_status(issue, args.status):
+    pass
+def match_tags(issue, args.tags):
+    pass
+def match_created(issue, args.created):
+    pass
+def match_ancestor(issue, args.ancestor):
+    pass
+def match_title(issue, args.title):
+    pass
+def match_description(issue, args.description):
+    pass
+def match_text(issue, args.text):
+    pass
+def match_parent(issue, args.parent):
+    pass
+
 def id_from_filename(filename):
     base = os.path.basename(filename)
     return int(os.path.splitext(base)[0])
@@ -64,17 +87,17 @@ def json_convert(o):
     if isinstance(o, dt):
         return format_date(o)
 
-def show_cmd(query_body):
-    for line in render_kanban(matching_issues(query_body)):
+def show_cmd(args):
+    for line in render_kanban(matching_issues(args)):
         print(line)
 
-def show_issues_cmd(query_body):
+def show_issues_cmd(args):
     print(100 * '*')
-    for issue in matching_issues(query_body):
+    for issue in matching_issues(args):
         print(issue)
         print(100 * '*')
 
-def create_cmd(lambda_body=None):
+def create_cmd():
     tmp = NamedTemporaryFile('w')
     template = {'title': '', 'status': BACKLOG, 'description': '', 'tags': [], 'parent_id': 0}
     tmp.file.write(json.dumps(template, indent=INDENT))
@@ -90,8 +113,6 @@ def create_cmd(lambda_body=None):
     user_issue.update({CREATED: format_date(dt.utcnow()), ID: id})
     parent_id = user_issue['parent_id']
     del user_issue['parent_id']
-    if lambda_body is not None:
-        apply_udf(lambda_body, user_issue)
     if not os.path.exists(issue_dir):
         os.mkdir(issue_dir)
     subtask_path = _subtask_path(parent_id, id)
@@ -117,23 +138,21 @@ def _input_user_issue(path):
     else:
         return None
 
-def delete_cmd(query_body):
-    for issue in matching_issues(query_body):
+def delete_cmd(args):
+    for issue in matching_issues(args):
         path = get_issue_path(issue)
         os.remove(path)
 
-def update_cmd(query_body, lambda_body):
-    for issue in matching_issues(query_body):
-        apply_udf(lambda_body, issue)
-        write_issue(issue, get_issue_path(issue))
+def edit_cmd(args):
+    pass
 
 def tag_issue(issue, tag):
     if 'tags' not in issue:
         issue['tags'] = set()
     issue['tags'].add(tag)
 
-def tag_cmd(query_body, tag):
-    for issue in matching_issues(query_body):
+def tag_cmd(args, tag):
+    for issue in matching_issues(args):
         tag_issue(issue, tag)
 
 def subtask_cmd(parent_id, subtask_id):
