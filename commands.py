@@ -6,7 +6,7 @@ from datetime import timedelta as td
 from render import render_kanban
 from tempfile import NamedTemporaryFile
 import subprocess
-from constants import TITLE, CREATED, DATE_FORMAT, ID, STATUS, BACKLOG, INDENT
+from constants import TITLE, CREATED, DATE_FORMAT, ID, STATUS, BACKLOG, INDENT, TAGS
 
 issue_dir = os.path.join(os.getcwd(), 'issues')
 
@@ -43,6 +43,12 @@ def format_date(date):
 def parse_date(date_str):
     return dt.strptime(date_str, DATE_FORMAT)
 
+def _is_negated(expr):
+    return expr.startswith('~:')
+
+def _is_negated_term(term):
+    return term.startswith('~')
+
 def matching_issues(args):
     return (issue for issue in issues() if match_issue(issue, args))
 
@@ -59,25 +65,35 @@ def match_issue(issue, args):
         match_parent(issue, args.parent)
     ])
 
-def match_id(issue, args.id):
-    return issue['id'] == args.id
+def match_id(issue, id):
+    return issue['id'] == id
 
-def match_status(issue, args.status):
+def match_status(issue, statuses):
+    return any((issue[STATUS].startswith(status) for status in statuses.split(',')))
+
+def match_tags(issue, tags):
+    is_negated = _is_negated(tags)
+    if is_negated:
+        tags = tags[2:]
+    matches = any((tag in issue[TAGS] for tag in tags.split(',')))
+    return is_negated ^ matches
+
+def match_created(issue, expr):
+    pass # todo: handle ><= +/- NyNmNwNdNhNm or date_fmt
+
+def match_ancestor(issue, ancestor_id):
+    return get_issue_path(issue).startswith(get_id_path(ancestor_id) + '.d')
+
+def match_title(issue, expr):
+    pass # TODO choose fuzzy matching or regex or substring
+
+def match_description(issue, expr):
     pass
-def match_tags(issue, args.tags):
+def match_text(issue, expr):
     pass
-def match_created(issue, args.created):
-    pass
-def match_ancestor(issue, args.ancestor):
-    pass
-def match_title(issue, args.title):
-    pass
-def match_description(issue, args.description):
-    pass
-def match_text(issue, args.text):
-    pass
-def match_parent(issue, args.parent):
-    pass
+
+def match_parent(issue, parent_id):
+    return _subtask_path(parent_id, issue[ID]) == get_issue_path(issue)
 
 def id_from_filename(filename):
     base = os.path.basename(filename)
