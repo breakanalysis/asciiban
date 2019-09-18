@@ -24,8 +24,8 @@ Install:
 # get python 3
 pip install -r requirements.txt
 clone this repo
-chmod +x ab.py
-alias ab="/path/to/ab.py"
+chmod +x fab.py
+alias fab="/path/to/fab.py"
 ```
 
 
@@ -38,9 +38,11 @@ fab --help
 Examples:
 
 ```
-fab show 'date>\today'
-fab show-issues 1
-fab delete 'status=done'
-fab update 'x.due_date+=timedelta(day=1)' 'x.importance>=3'
-fab create 'my_title' 'x.date=\today'
+fab create                            # create a new issue, opens editor
+fab show -c "<2d"                     # show board with issues created earlier than 2 days ago
+fab edit -c ">2h30m" -c "<1h"         # edit issues created between 1h and 2h30m ago
+fab delete -p 4                       # delete issues whose parent has id 4
+fab subtask 2 4                       # make issue 4 a subtask of issue 2
+fab tag -a 5 "food,china"             # add tags food and china to all tasks descending from issue 5
+fab show-issues -t "food,japan"       # display detailed information about all tasks tagged with food or japan (or both)
 ```
