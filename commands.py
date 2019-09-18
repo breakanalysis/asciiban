@@ -2,10 +2,11 @@ import os
 import glob
 import json
 from datetime import datetime as dt
-from datetime import timedelta as td
+from dateutil.relativedelta import relativedelta
 from render import render_kanban
 from tempfile import NamedTemporaryFile
 import subprocess
+import re
 from constants import TITLE, CREATED, DESCRIPTION, DATE_FORMAT, ID, STATUS, BACKLOG, INDENT, TAGS
 
 issue_dir = os.path.join(os.getcwd(), 'issues')
@@ -15,8 +16,16 @@ def issues():
 
 def parse_issue_file(filename):
     with open(filename, 'r') as f:
-        issue = json.load(f)
+        issue = json.load(f, object_hook=datetime_parser)
     return issue
+
+def datetime_parser(dct):
+    for k, v in dct.items():
+        try:
+            dct[k] = dt.strptime(v, DATE_FORMAT)
+        except:
+            pass
+    return dct
 
 def issue_files():
     if not os.path.exists(issue_dir):
@@ -94,6 +103,18 @@ def time_symbol_to_level(s):
     else:
         return 3 # second level
 
+def round_time(t, level):
+    for curr_lvl in range(level + 1, 5):
+        if curr_lvl == 1:
+            t = t.replace(hour=0)
+        if curr_lvl == 2:
+            t = t.replace(minute=0)
+        if curr_lvl == 3:
+            t = t.replace(second=0)
+        if curr_lvl == 4:
+            t = t.replace(microsecond=0)
+    return t
+
 def match_created(issue, expr):
     op = expr[0]
     expr = expr[1:]
@@ -101,7 +122,7 @@ def match_created(issue, expr):
     level = 0 # day level by default
     delta = relativedelta()
     if m:
-        for i in range(1, m.lastindex/2 + 1):
+        for i in range(1, int(m.lastindex/2) + 1):
             digits = int(m.group(2 * i - 1))
             unit = m.group(2 * i)
             level = max(level, time_symbol_to_level(unit))
@@ -121,13 +142,13 @@ def match_created(issue, expr):
                 delta += relativedelta(seconds=digits)
             else:
                 raise Exception(f"Unrecognized time unit {unit}.")
-        cutoff = round_time(datetime.now(), level) - delta
+        cutoff = round_time(dt.now(), level) - delta
     else:
         try:
-            cutoff = datetime.strptime(expr, date_fmt='%Y-%m-%d')
+            cutoff = dt.strptime(expr, date_fmt='%Y-%m-%d')
         except:
             raise Exception(f"Relative time point specification {expr} does not match ([0-9]+[YMwdhms])+ nor YEAR-MONTH-DAY.")
-    issue_time = round_time(issue['created'], level)
+    issue_time = round_time(issue[CREATED], level)
     if op == '=':
         return issue_time == cutoff
     elif op == '<':
@@ -187,7 +208,7 @@ def show_cmd(args):
 def show_issues_cmd(args):
     print(100 * '*')
     for issue in matching_issues(args):
-        print(json.dumps(issue, indent=2))
+        print(json.dumps(issue, default=json_convert, indent=INDENT))
         print(100 * '*')
 
 def create_cmd():
