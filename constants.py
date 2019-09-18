@@ -1,4 +1,6 @@
 STATUS = 'status'
+TAGS = 'tags'
+DESCRIPTION = 'description'
 BACKLOG = 'backlog'
 UPCOMING = 'upcoming'
 WIP = 'wip'

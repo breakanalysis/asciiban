@@ -6,7 +6,7 @@ from datetime import timedelta as td
 from render import render_kanban
 from tempfile import NamedTemporaryFile
 import subprocess
-from constants import TITLE, CREATED, DATE_FORMAT, ID, STATUS, BACKLOG, INDENT, TAGS
+from constants import TITLE, CREATED, DESCRIPTION, DATE_FORMAT, ID, STATUS, BACKLOG, INDENT, TAGS
 
 issue_dir = os.path.join(os.getcwd(), 'issues')
 
@@ -54,15 +54,15 @@ def matching_issues(args):
 
 def match_issue(issue, args):
     return all([
-        match_id(issue, args.id),
-        match_status(issue, args.status),
-        match_tags(issue, args.tags),
-        match_created(issue, args.created),
-        match_ancestor(issue, args.ancestor),
-        match_title(issue, args.title),
-        match_description(issue, args.description),
-        match_text(issue, args.text),
-        match_parent(issue, args.parent)
+        not args.id or match_id(issue, args.id),
+        not args.status or all(match_status(issue, expr) for expr in arg.status),
+        not args.tags or all(match_tags(issue, expr) for expr in args.tags),
+        not args.created or all(match_created(issue, expr) for expr in args.created),
+        not args.ancestor or match_ancestor(issue, args.ancestor),
+        not args.title or all(match_title(issue, expr) for expr in args.title),
+        not args.description or all(match_description(issue, expr) for expr in args.description),
+        not args.match or all(match_text(issue, expr) for expr in args.match),
+        not args.parent or match_parent(issue, args.parent)
     ])
 
 def match_id(issue, id):
@@ -78,19 +78,96 @@ def match_tags(issue, tags):
     matches = any((tag in issue[TAGS] for tag in tags.split(',')))
     return is_negated ^ matches
 
+def time_symbol_to_level(s):
+    if s == 'Y':
+        return 0 # day level
+    elif s == 'M':
+        return 0 # day level
+    elif s == 'w':
+        return 0 # day level
+    elif s == 'd':
+        return 0 # day level
+    elif s == 'h':
+        return 1 # hour level
+    elif s == 'm':
+        return 2 # minute level
+    else:
+        return 3 # second level
+
 def match_created(issue, expr):
-    pass # todo: handle ><= +/- NyNmNwNdNhNm or date_fmt
+    op = expr[0]
+    expr = expr[1:]
+    m = re.match('(?:([0-9]+)([YMwdhms]))+', expr)
+    level = 0 # day level by default
+    delta = relativedelta()
+    if m:
+        for i in range(1, m.lastindex/2 + 1):
+            digits = int(m.group(2 * i - 1))
+            unit = m.group(2 * i)
+            level = max(level, time_symbol_to_level(unit))
+            if unit == 'Y':
+                delta += relativedelta(years=digits)
+            elif unit == 'M':
+                delta += relativedelta(months=digits)
+            elif unit == 'w':
+                delta += relativedelta(weeks=digits)
+            elif unit == 'd':
+                delta += relativedelta(days=digits)
+            elif unit == 'h':
+                delta += relativedelta(hours=digits)
+            elif unit == 'm':
+                delta += relativedelta(minutes=digits)
+            elif unit == 's':
+                delta += relativedelta(seconds=digits)
+            else:
+                raise Exception(f"Unrecognized time unit {unit}.")
+        cutoff = round_time(datetime.now(), level) - delta
+    else:
+        try:
+            cutoff = datetime.strptime(expr, date_fmt='%Y-%m-%d')
+        except:
+            raise Exception(f"Relative time point specification {expr} does not match ([0-9]+[YMwdhms])+ nor YEAR-MONTH-DAY.")
+    issue_time = round_time(issue['created'], level)
+    if op == '=':
+        return issue_time == cutoff
+    elif op == '<':
+        return issue_time < cutoff
+    elif op == '>':
+        return issue_time > cutoff
+    else:
+        raise Exception(f"Unrecognized operator {op}")
+
 
 def match_ancestor(issue, ancestor_id):
     return get_issue_path(issue).startswith(get_id_path(ancestor_id) + '.d')
 
+def _lcs(X, Y, m, n): 
+    if m == 0 or n == 0: 
+       return 0; 
+    elif X[m-1] == Y[n-1]: 
+       return 1 + _lcs(X, Y, m-1, n-1); 
+    else: 
+       return max(_lcs(X, Y, m, n-1), _lcs(X, Y, m-1, n)); 
+
+def lcs(X, Y):
+    return _lcs(X, Y, len(X), len(Y))
+
+def match_generic(issue_func):
+    def decorated(issue, expr):
+        if not expr:
+            return True
+        expr = expr.replace(' ', '')
+        return lcs(expr, issue_func(issue).replace(' ', ''))/len(expr) > 0.8
+    return decorated
+
 def match_title(issue, expr):
-    pass # TODO choose fuzzy matching or regex or substring
+    return match_generic(lambda i: i[TITLE])(issue, expr)
 
 def match_description(issue, expr):
-    pass
+    return match_generic(lambda i: i[DESCRIPTION])(issue, expr)
+
 def match_text(issue, expr):
-    pass
+    return match_generic(lambda i: i[TITLE] + i[DESCRIPTION])(issue, expr)
 
 def match_parent(issue, parent_id):
     return _subtask_path(parent_id, issue[ID]) == get_issue_path(issue)
@@ -110,12 +187,12 @@ def show_cmd(args):
 def show_issues_cmd(args):
     print(100 * '*')
     for issue in matching_issues(args):
-        print(issue)
+        print(json.dumps(issue, indent=2))
         print(100 * '*')
 
 def create_cmd():
     tmp = NamedTemporaryFile('w')
-    template = {'title': '', 'status': BACKLOG, 'description': '', 'tags': [], 'parent_id': 0}
+    template = {TITLE: '', STATUS: BACKLOG, DESCRIPTION: '', TAGS: [], 'parent_id': 0}
     tmp.file.write(json.dumps(template, indent=INDENT))
     tmp.file.flush()
     user_issue = _input_user_issue(tmp.name)
@@ -160,16 +237,26 @@ def delete_cmd(args):
         os.remove(path)
 
 def edit_cmd(args):
-    pass
+    issues = list(matching_issues(args))
+    n = 1
+    for issue in issues:
+        path = get_issue_path(issue)
+        if len(issues) > 1:
+            print(f"Edit {path} ({n} of {len(issues)}).")
+            input("Press ENTER to continue.")
+        n += 1
+        _input_user_issue(path)
 
 def tag_issue(issue, tag):
     if 'tags' not in issue:
         issue['tags'] = set()
     issue['tags'].add(tag)
 
-def tag_cmd(args, tag):
+def tag_cmd(args):
+    tags = args.mod
     for issue in matching_issues(args):
-        tag_issue(issue, tag)
+        for tag in tags.split(','):
+            tag_issue(issue, tag)
 
 def subtask_cmd(parent_id, subtask_id):
     subtask_current_path = get_id_path(subtask_id)

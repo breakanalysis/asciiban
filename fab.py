@@ -10,16 +10,16 @@ from argparse import ArgumentParser
 
 def add_filtering(parsers):
     for parser in parsers:
-        parser.add_argument('-i', '--id', action='append', help="Match issue with given id.")
-        parser.add_argument('-s', '--status', help="Match issues whose status matches any of given comma separated statuses.")
-        parser.add_argument('-T', '--tags', action='append', help="")
+        parser.add_argument('-i', '--id', type=int, help="Match issue with given id.")
+        parser.add_argument('-s', '--status', help="Match issues whose status matches any of given comma separated statuses. May be repeated.")
+        parser.add_argument('-T', '--tags', action='append', help="Match issues that have at least one tag among the comma separated tags in TAGS. May be repeated.")
         # parser.add_argument('-D', '--due-date', action='append', help="")
-        parser.add_argument('-c', '--created', action='append', help="")
-        parser.add_argument('-a', '--ancestor', action='append', help="")
-        parser.add_argument('-t', '--title', action='append', help="")
-        parser.add_argument('-d', '--description', action='append', help="")
-        parser.add_argument('-m', '--match', action='append', help="")
-        parser.add_argument('-p', '--parent', action='append', help="")
+        parser.add_argument('-c', '--created', action='append', help="Match by creation date pattern CREATED which starts with [<>=] followed by ([0-9]+[YMwdhms])+ or YEAR-MONTH-DAY. For equality filtering, current time and creation time are rounded downward to the same precision as used in CREATED (i.e. day, hour or minute precision). May be repeated.")
+        parser.add_argument('-a', '--ancestor', type=int, help="Match issues that are decendants of issue with id ANCESTOR.")
+        parser.add_argument('-t', '--title', action='append', help="Fuzzily match issues by comparing their title with TITLE. May be repeated.")
+        parser.add_argument('-d', '--description', action='append', help="Fuzzily match issues by comparing their description with DESCRIPTION. May be repeated.")
+        parser.add_argument('-m', '--match', action='append', help="Fuzzily match issues by comparing their title and description with MATCH. May be repeated.")
+        parser.add_argument('-p', '--parent', type=int, help="Match issues that are children of issue with id PARENT.")
         # parser.add_argument('-P', '--priority', action='append', help="")
 
 def add_tag_parser(sub_parsers):
@@ -46,18 +46,18 @@ if __name__=='__main__':
     args = parser.parse_args()
     command = args.command
     if command == 'show-issues':
-        pass
+        show_issues_cmd(args)
     elif command == 'show':
-        pass
+        show_cmd(args)
     elif command == 'create':
-        pass
+        create_cmd()
     elif command == 'delete':
-        pass
+        delete_cmd(args)
     elif command == 'edit':
-        pass
+        edit_cmd(args)
     elif command == 'tag':
-        import pdb; pdb.set_trace()
+        tag_cmd(args)
     elif command == 'subtask':
-        pass
+        subtask_cmd(args.parent_id, args.subtask_id)
     else:
         pass
