@@ -17,6 +17,10 @@ def issues():
 def parse_issue_file(filename):
     with open(filename, 'r') as f:
         issue = json.load(f, object_hook=datetime_parser)
+        if TAGS in issue:
+            issue[TAGS] = set(issue[TAGS])
+        else:
+            issue[TAGS] = set()
     return issue
 
 def datetime_parser(dct):
@@ -55,16 +59,13 @@ def parse_date(date_str):
 def _is_negated(expr):
     return expr.startswith('~:')
 
-def _is_negated_term(term):
-    return term.startswith('~')
-
 def matching_issues(args):
     return (issue for issue in issues() if match_issue(issue, args))
 
 def match_issue(issue, args):
     return all([
         not args.id or match_id(issue, args.id),
-        not args.status or all(match_status(issue, expr) for expr in arg.status),
+        not args.status or match_status(issue, args.status),
         not args.tags or all(match_tags(issue, expr) for expr in args.tags),
         not args.created or all(match_created(issue, expr) for expr in args.created),
         not args.ancestor or match_ancestor(issue, args.ancestor),
@@ -78,7 +79,10 @@ def match_id(issue, id):
     return issue['id'] == id
 
 def match_status(issue, statuses):
-    return any((issue[STATUS].startswith(status) for status in statuses.split(',')))
+    is_negated = _is_negated(statuses)
+    if is_negated:
+        statuses = statuses[2:]
+    return is_negated ^ any((issue[STATUS].startswith(status) for status in statuses.split(',')))
 
 def match_tags(issue, tags):
     is_negated = _is_negated(tags)
@@ -200,6 +204,8 @@ def id_from_filename(filename):
 def json_convert(o):
     if isinstance(o, dt):
         return format_date(o)
+    if isinstance(o, set):
+        return list(o)
 
 def show_cmd(args):
     for line in render_kanban(matching_issues(args)):
@@ -269,15 +275,16 @@ def edit_cmd(args):
         _input_user_issue(path)
 
 def tag_issue(issue, tag):
-    if 'tags' not in issue:
-        issue['tags'] = set()
-    issue['tags'].add(tag)
+    if TAGS not in issue:
+        issue[TAGS] = set()
+    issue[TAGS].add(tag)
 
 def tag_cmd(args):
     tags = args.mod
     for issue in matching_issues(args):
         for tag in tags.split(','):
             tag_issue(issue, tag)
+        write_issue(issue, get_issue_path(issue))
 
 def subtask_cmd(parent_id, subtask_id):
     subtask_current_path = get_id_path(subtask_id)

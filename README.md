@@ -1,6 +1,6 @@
 # Textbased kanban issue tracker
 
-Each issue has a key-value data structure with arbitrary information.
+Each issue has a key-value data structure with predefined and custom data.
 The mandatory keys are id (auto-generated increasing id), title and status.
 Status is automatically initiated to 'backlog'.
 The 'status' key has predefined usage as columns of a kanban board.
@@ -13,10 +13,20 @@ TODO: implement escape sequences for dates
 TODO: nicer and more flexible views for the issues themselves
 TODO: implement priority field and sorting function(s)
 
-Each command is a selection followed by a command.
+Certain subcommands (show, show-issues, edit, delete and tag) can be applied in batch to
+issues that match a specified filter. The filter is specified using command line arguments
+and giving values and expressions according to a simple syntax.
 
-Commands are accomanied with python expressions QUERY and LAMBDA which are bodies of lambdas
-whose variable is x. QUERY is used for issue selection by filtering and LAMBDA is used for setting key-value data on issues.
+## Filters
+- Id: -i, --id id
+- Status: -s, --status comma separated (prefixes of) statuses. The filter can be negated by adding ~: before.
+- Creation date: -c, --created [><=]([0-9][YMdwhms])+ or [><=]YEAR-MONTH-DAY
+- Tags: -T, --tags comma separated tag. The filter can be negated by adding ~: before.
+- Parent: -p, -parent id
+- Ancstor: -a, -ancestor id
+- Title:  -t, --title string (uses fuzzy matching)
+- Description: -d, --description string (uses fuzzy matching)
+- Title or Description: -m, --match string (uses fuzzy matching)
 
 Install:
 
