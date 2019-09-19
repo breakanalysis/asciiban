@@ -7,6 +7,7 @@ from render import render_kanban
 from tempfile import NamedTemporaryFile
 import subprocess
 import re
+import regex
 from constants import TITLE, CREATED, DESCRIPTION, DATE_FORMAT, ID, STATUS, BACKLOG, INDENT, TAGS
 
 issue_dir = os.path.join(os.getcwd(), 'issues')
@@ -172,23 +173,16 @@ def match_created(issue, expr):
 def match_ancestor(issue, ancestor_id):
     return get_issue_path(issue).startswith(get_id_path(ancestor_id) + '.d')
 
-def _lcs(X, Y, m, n): 
-    if m == 0 or n == 0: 
-       return 0; 
-    elif X[m-1] == Y[n-1]: 
-       return 1 + _lcs(X, Y, m-1, n-1); 
-    else: 
-       return max(_lcs(X, Y, m, n-1), _lcs(X, Y, m-1, n)); 
-
-def lcs(X, Y):
-    return _lcs(X, Y, len(X), len(Y))
+def fuzzy_match(expr, text):
+    pattern1 = ' '.join(f"({e})" + "{e<=1}" for e in expr.split(' '))
+    pattern2 = f"({expr})" + "{e<=" + f"{round(len(expr)*0.15)}" + "}"
+    return bool(regex.match(pattern1, text) or regex.match(pattern2, text))
 
 def match_generic(issue_func):
     def decorated(issue, expr):
         if not expr:
             return True
-        expr = expr.replace(' ', '')
-        return lcs(expr, issue_func(issue).replace(' ', ''))/len(expr) > 0.8
+        return fuzzy_match(expr, issue_func(issue))
     return decorated
 
 def match_title(issue, expr):
