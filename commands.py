@@ -50,6 +50,12 @@ def write_issue(issue, issue_path):
         json_str = json.dumps(issue, default=json_convert, indent=INDENT)
         f.write(json_str)
 
+def save_issue(issue):
+    write_issue(issue, get_issue_path(issue))
+
+def load_issue(id):
+    return parse_issue_file(get_id_path(id))
+
 def format_date(date):
     return date.strftime(DATE_FORMAT)
 
@@ -212,10 +218,17 @@ def show_cmd(args):
         print(line)
 
 def show_issues_cmd(args):
-    print(100 * '*')
-    for issue in matching_issues(args):
-        print(json.dumps(issue, default=json_convert, indent=INDENT))
+    indent = None
+    if args.pretty:
         print(100 * '*')
+        indent = INDENT
+    for issue in matching_issues(args):
+        if not args.no_path:
+            print(get_issue_path(issue))
+        if not args.no_details:
+            print(json.dumps(issue, default=json_convert, indent=indent))
+        if args.pretty:
+            print(100 * '*')
 
 def create_cmd():
     tmp = NamedTemporaryFile('w')
@@ -284,11 +297,13 @@ def tag_cmd(args):
     for issue in matching_issues(args):
         for tag in tags.split(','):
             tag_issue(issue, tag)
-        write_issue(issue, get_issue_path(issue))
+        save_issue(issue)
 
-def subtask_cmd(parent_id, subtask_id):
-    subtask_current_path = get_id_path(subtask_id)
-    os.rename(subtask_current_path, _subtask_path(parent_id, subtask_id))
+def subtask_cmd(args):
+    for issue in matching_issues(args):
+        subtask_id = issue[ID]
+        subtask_current_path = get_id_path(subtask_id)
+        os.rename(subtask_current_path, _subtask_path(args.parent_id, subtask_id))
 
 def _subtask_path(parent_id, subtask_id):
     if parent_id == 0:
@@ -299,3 +314,13 @@ def _subtask_path(parent_id, subtask_id):
     if not os.path.exists(subtask_directory):
         os.mkdir(subtask_directory)
     return os.path.join(subtask_directory, str(subtask_id))
+
+def rename_cmd(args):
+    issue = load_issue(args.id)
+    issue[TITLE] = args.title
+    save_issue(issue)
+
+def transition_cmd(args):
+    for issue in matching_issues(args):
+        issue[STATUS] = args.new_status
+        save_issue(issue)
