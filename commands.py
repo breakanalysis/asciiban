@@ -8,7 +8,10 @@ from tempfile import NamedTemporaryFile
 import subprocess
 import re
 import regex
-from constants import TITLE, CREATED, DESCRIPTION, DATE_FORMAT, ID, STATUS, BACKLOG, INDENT, TAGS
+import readchar
+from constants import (TITLE, CREATED, DESCRIPTION, DATE_FORMAT,
+                       ID, STATUS, BACKLOG, INDENT, TAGS, DUE_DATE,
+                       HABIT, LOG, SUCCESS, DATE, TRACK_RECORD)
 
 issue_dir = os.path.join(os.getcwd(), 'issues')
 
@@ -126,9 +129,7 @@ def round_time(t, level):
             t = t.replace(microsecond=0)
     return t
 
-def match_created(issue, expr):
-    op = expr[0]
-    expr = expr[1:]
+def _find_cutoff(expr, past=True):
     m = re.match('(?:([0-9]+)([YMwdhms]))+', expr)
     level = 0 # day level by default
     delta = relativedelta()
@@ -153,12 +154,21 @@ def match_created(issue, expr):
                 delta += relativedelta(seconds=digits)
             else:
                 raise Exception(f"Unrecognized time unit {unit}.")
-        cutoff = round_time(dt.now(), level) - delta
+        if past:
+            cutoff = round_time(dt.now(), level) - delta
+        else:
+            cutoff = round_time(dt.now(), level) + delta
     else:
         try:
             cutoff = dt.strptime(expr, date_fmt='%Y-%m-%d')
         except:
             raise Exception(f"Relative time point specification {expr} does not match ([0-9]+[YMwdhms])+ nor YEAR-MONTH-DAY.")
+    return cutoff
+
+def match_created(issue, expr):
+    op = expr[0]
+    expr = expr[1:]
+    cutoff = _find_cutoff(expr)
     issue_time = round_time(issue[CREATED], level)
     if op == '=':
         return issue_time == cutoff
@@ -168,7 +178,6 @@ def match_created(issue, expr):
         return issue_time > cutoff
     else:
         raise Exception(f"Unrecognized operator {op}")
-
 
 def match_ancestor(issue, ancestor_id):
     return get_issue_path(issue).startswith(get_id_path(ancestor_id) + '.d')
@@ -224,14 +233,17 @@ def show_issues_cmd(args):
         if args.pretty:
             print(100 * '*')
 
-def create_cmd():
+def create_cmd(issue_type='issue'):
     tmp = NamedTemporaryFile('w')
     template = {TITLE: '', STATUS: BACKLOG, DESCRIPTION: '', TAGS: [], 'parent_id': 0}
+    if issue_type==HABIT:
+        template[DUE_DATE] = '30d'
+        template[HABIT] = True
     tmp.file.write(json.dumps(template, indent=INDENT))
     tmp.file.flush()
     user_issue = _input_user_issue(tmp.name)
     if user_issue == None:
-        print("Did not create issue.")
+        print(f"Did not create {issue_type}.")
         return
     tmp.close()
     ids = [id_from_filename(filename) for filename in issue_files()]
@@ -240,6 +252,8 @@ def create_cmd():
     user_issue.update({CREATED: format_date(dt.utcnow()), ID: id})
     parent_id = user_issue['parent_id']
     del user_issue['parent_id']
+    if DUE_DATE in user_issue:
+        user_issue[DUE_DATE] = _find_cutoff(user_issue[DUE_DATE], past=False)
     if not os.path.exists(issue_dir):
         os.mkdir(issue_dir)
     subtask_path = _subtask_path(parent_id, id)
@@ -318,3 +332,34 @@ def transition_cmd(args):
     for issue in matching_issues(args):
         issue[STATUS] = args.new_status
         save_issue(issue)
+
+def _user_edit_file(path):
+    subprocess.run(['vim', path])
+    with open(path, 'r') as fin:
+        edited_contents = fin.read()
+    return edited_contents
+
+def log_cmd(args):
+    date = format_date(dt.now())
+    id = args.id
+    issue = load_issue(id)
+    if HABIT in issue and not args.no_report:
+        success = ''
+        while not success in ['y', 'n']:
+            print("Did you succeed? (y/n)?")
+            success = readchar.readchar()
+        if not TRACK_RECORD in issue:
+            issue[TRACK_RECORD] = []
+        issue[TRACK_RECORD].append({SUCCESS: success, DATE: date})
+    if LOG in issue:
+        log = issue[LOG]
+    else:
+        log = ''
+    log += date + ':\n'
+    tmp = NamedTemporaryFile('w')
+    tmp.file.write(log)
+    tmp.file.flush()
+    log = _user_edit_file(tmp.name)
+    tmp.close()
+    issue[LOG] = log
+    save_issue(issue)

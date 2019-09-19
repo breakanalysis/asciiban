@@ -1,6 +1,9 @@
 from collections import defaultdict, Counter
-from constants import ID, STATUS, BACKLOG, UPCOMING, WIP, BLOCKED, DONE, TITLE
+from constants import (ID, STATUS, BACKLOG, UPCOMING,
+                       WIP, BLOCKED, DONE, TITLE, HABIT,
+                       SUCCESS, TRACK_RECORD, DUE_DATE)
 from textwrap import wrap
+from datetime import datetime as dt
 
 def render_kanban(issues, statuses=None, box_width=15, box_rows=3):
     if statuses==None:
@@ -38,8 +41,20 @@ def render_text(text, box_width):
 
 def render_issue(issue, box_width, box_rows):
     rows = [render_text(str(issue[ID]), box_width)]
+    if HABIT in issue:
+        successes = 0
+        failures = 0
+        if TRACK_RECORD not in issue:
+            issue[TRACK_RECORD] = []
+        for data in issue[TRACK_RECORD]:
+            if data[SUCCESS] == 'y':
+                successes += 1
+            else:
+                failures += 1
+        days_remaining = (issue[DUE_DATE] - dt.now()).days + 1
+        rows.append(render_text(f"S:{successes} F:{failures} R:{days_remaining}", box_width))
     title = issue[TITLE]
-    content = wrap(title, box_width)[:box_rows - 1]
+    content = wrap(title, box_width)[:box_rows - len(rows)]
     rows.extend([render_text(t, box_width) for t in content])
     rows.extend([box_width * ' ' for _ in range(box_rows - len(rows))])
     return rows

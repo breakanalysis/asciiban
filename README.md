@@ -28,6 +28,15 @@ and giving values and expressions according to a simple syntax.
 - Description: -d, --description string (uses fuzzy matching)
 - Title or Description: -m, --match string (uses fuzzy matching)
 
+## Journaling/logging
+- Use ```fab log -i ID```.
+- The due-date is set with same syntax as for creation date, but relative dates refer to future dates.
+
+## Habits
+- Create a habit with fab ```create-habit```.
+- Report habit success with ```fab log -i ID```. To just edit log use ```fab log -i ID --no-report```.
+- Successes, failures and days remaining are displayed in kanban board
+
 Install:
 
 ```
@@ -43,16 +52,25 @@ Usage:
 
 ```
 fab --help
+fab SUBCOMMAND --help
 ```
 
 Examples:
 
 ```
-fab create                            # create a new issue, opens editor
-fab show -c "<2d"                     # show board with issues created earlier than 2 days ago
-fab edit -c ">2h30m" -c "<1h"         # edit issues created between 1h and 2h30m ago
-fab delete -p 4                       # delete issues whose parent has id 4
-fab subtask 2 4                       # make issue 4 a subtask of issue 2
-fab tag -a 5 "food,china"             # add tags food and china to all tasks descending from issue 5
-fab show-issues -t "food,japan"       # display detailed information about all tasks tagged with food or japan (or both)
+fab create                                   # create a new issue, opens editor
+fab rename -i 1 "My new title"               # sets a new title
+fab show -c "<2d"                            # show board with issues created earlier than 2 days ago
+fab edit -c ">2h30m" -c "<1h"                # edit issues created between 1h and 2h30m ago
+fab delete -p 4                              # delete issues whose parent has id 4
+fab subtask 2 4                              # make issue 4 a subtask of issue 2
+fab tag -a 5 "food,china"                    # add tags food and china to all tasks descending from issue 5
+fab show-issues -t "food,japan"              # display detailed information about all tasks tagged with food or japan (or both)
+fab show-issues --no-details                 # show paths for all issues
+fab show-issues --no-path                    # show one json per line for all issues
+fab show-issues --pretty                     # expand issues and add separating vertical lines
+fab log -i 1                                 # update log for issue 1
+fab create-habit                             # start a new healthy habit
+fab log -i 10                                # report success on issue 10 if it's a habit and update log
+fab transition -s wip done                   # transition all issues from wip to done
 ```

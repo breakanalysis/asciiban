@@ -4,10 +4,11 @@ from datetime import datetime
 from commands import (
         show_cmd, create_cmd, edit_cmd, delete_cmd,
         show_issues_cmd, tag_cmd, subtask_cmd,
-        rename_cmd, transition_cmd
+        rename_cmd, transition_cmd, log_cmd
         )
 import click
 from argparse import ArgumentParser
+from constants import HABIT
 
 def add_filtering(parsers):
     for parser in parsers:
@@ -51,19 +52,28 @@ def add_transition_parser(sub_parsers):
     transition_parser.add_argument('new_status', help="The new status")
     return transition_parser
 
+def add_log_parser(sub_parsers):
+    log_parser = sub_parsers.add_parser("log", help="Edit an issues log in editor. Additionally if issue is habit, report success or failure.")
+    log_parser.add_argument('-i', '--id', type=int, help="Id of issue whose log to edit.")
+    log_parser.add_argument('--no-report', action='store_true', help="Just edit log without reporting success or failure.")
+    return log_parser
+
 if __name__=='__main__':
     parser = ArgumentParser()
     sub_parsers = parser.add_subparsers(help='Available commands', dest='command')
     show_issues_parser = add_show_issues_parser(sub_parsers) 
     show_parser = sub_parsers.add_parser("show", help="Display a kanban board.")
     create_parser = sub_parsers.add_parser("create", help="Create an issue by editing a json template.")
+    create_habit_parser = sub_parsers.add_parser("create-habit", help="Create a habit issue by editing a json template.")
     delete_parser = sub_parsers.add_parser("delete", help="Delete all issues matching given filters.")
     edit_parser = sub_parsers.add_parser("edit", help="Edit all issues matching given filters.")
     tag_parser = add_tag_parser(sub_parsers)
     subtask_parser = add_subtask_parser(sub_parsers)
     transition_parser = add_transition_parser(sub_parsers)
     add_rename_parser(sub_parsers)
-    add_filtering([show_parser, show_issues_parser, delete_parser, edit_parser, tag_parser, subtask_parser, transition_parser])
+    log_parser = add_log_parser(sub_parsers)
+    add_filtering([show_parser, show_issues_parser, delete_parser, edit_parser, tag_parser, subtask_parser,
+                   transition_parser])
     args = parser.parse_args()
     command = args.command
     if command == 'show-issues':
@@ -84,5 +94,9 @@ if __name__=='__main__':
         rename_cmd(args)
     elif command == 'transition':
         transition_cmd(args)
+    elif command == 'create-habit':
+        create_cmd(HABIT)
+    elif command == 'log':
+        log_cmd(args)
     else:
         pass
