@@ -4,7 +4,7 @@ from datetime import datetime
 from commands import (
         show_cmd, create_cmd, edit_cmd, delete_cmd,
         show_issues_cmd, tag_cmd, subtask_cmd,
-        rename_cmd, transition_cmd, log_cmd
+        rename_cmd, transition_cmd, log_cmd, settings_cmd
         )
 import click
 from argparse import ArgumentParser
@@ -72,6 +72,7 @@ if __name__=='__main__':
     transition_parser = add_transition_parser(sub_parsers)
     add_rename_parser(sub_parsers)
     log_parser = add_log_parser(sub_parsers)
+    settings_parser = sub_parsers.add_parser("settings", help="Edit asciiban settings file.")
     add_filtering([show_parser, show_issues_parser, delete_parser, edit_parser, tag_parser, subtask_parser,
                    transition_parser])
     args = parser.parse_args()
@@ -98,5 +99,7 @@ if __name__=='__main__':
         create_cmd(HABIT)
     elif command == 'log':
         log_cmd(args)
+    elif command == 'settings':
+        settings_cmd()
     else:
         pass

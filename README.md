@@ -14,7 +14,7 @@ and giving values and expressions according to a simple syntax.
 ## Filters
 - Id: -i, --id id
 - Status: -s, --status comma separated (prefixes of) statuses. The filter can be negated by adding ~: before.
-- Creation date: -c, --created [><=]([0-9][YMdwhms])+ or [><=]YEAR-MONTH-DAY
+- Creation date: <pre>-c, --created [><=]([0-9][YMdwhms])+ or [><=]YEAR-MONTH-DAY</pre>
 - Tags: -T, --tags comma separated tag. The filter can be negated by adding ~: before.
 - Parent: -p, -parent id
 - Ancstor: -a, -ancestor id

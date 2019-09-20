@@ -12,8 +12,8 @@ import readchar
 from constants import (TITLE, CREATED, DESCRIPTION, DATE_FORMAT,
                        ID, STATUS, BACKLOG, INDENT, TAGS, DUE_DATE,
                        HABIT, LOG, SUCCESS, DATE, TRACK_RECORD,
-                       DATADIR)
-from settings import get_settings
+                       DATADIR, EDITOR, MAX_BOARD_ROWS)
+from settings import get_settings, get_dotfile
 
 settings = get_settings()
 issue_dir = f"{settings[DATADIR]}/issues"
@@ -264,7 +264,7 @@ def create_cmd(issue_type='issue'):
     print(f"Created issue {id} at {subtask_path}")
 
 def _input_user_issue(path):
-    subprocess.run(['vim', path])
+    subprocess.run([settings[EDITOR], path])
     with open(path, 'r') as fin:
         edited_contents = fin.read()
     if not edited_contents.isspace():
@@ -337,7 +337,7 @@ def transition_cmd(args):
         save_issue(issue)
 
 def _user_edit_file(path):
-    subprocess.run(['vim', path])
+    subprocess.run([settings[EDITOR], path])
     with open(path, 'r') as fin:
         edited_contents = fin.read()
     return edited_contents
@@ -366,3 +366,14 @@ def log_cmd(args):
     tmp.close()
     issue[LOG] = log
     save_issue(issue)
+
+def settings_cmd():
+    dotfile = get_dotfile()
+    if not os.path.exists(dotfile):
+        with open(dotfile, 'w') as f:
+            contents = [f"#{MAX_BOARD_ROWS}=20",
+                        f"#{DATADIR}={os.environ.get('HOME', '/home/your-user')}/.asciiban.d",
+                        f"#{EDITOR}=vi"]
+            for line in contents:
+                f.write(line + '\n')
+    subprocess.run([settings[EDITOR], dotfile])
