@@ -14,7 +14,7 @@ and giving values and expressions according to a simple syntax.
 ## Filters
 - Id: -i, --id id
 - Status: -s, --status comma separated (prefixes of) statuses. The filter can be negated by adding ~: before.
-- Creation date: <pre>-c, --created [><=]([0-9][YMdwhms])+ or [><=]YEAR-MONTH-DAY</pre>
+- Creation date: -c, --created \[><=\]\(\[0-9\]\[YMdwhms\]\)+ or \[><=\]YEAR-MONTH-DAY
 - Tags: -T, --tags comma separated tag. The filter can be negated by adding ~: before.
 - Parent: -p, -parent id
 - Ancstor: -a, -ancestor id
@@ -27,11 +27,20 @@ and giving values and expressions according to a simple syntax.
 - The due-date is set with same syntax as for creation date, but relative dates refer to future dates.
 
 ## Habits
-- Create a habit with fab ```create-habit```.
+- Create a habit with ```fab create-habit```.
 - Report habit success with ```fab log -i ID```. To just edit log use ```fab log -i ID --no-report```.
 - Successes, failures and days remaining are displayed in kanban board
 
-Install:
+## Settings
+- Use ```fab settings``` to edit settings. If settings file is abscent a template is created.
+- Comment lines with #.
+- Settings are in $ASCIIBAN_DOTFILE or by default in $HOME/.asciiban
+
+## Data
+- Data resides in $ASCIIBAN_DATADIR or by default in $HOME/.asciiban.d
+- To persist issues use any method of your choice. If the data directory is a git repo, pushing and pulling can be done with ```fab push``` and ```fab pull```.
+
+## Install
 
 ```
 # get python 3
@@ -41,15 +50,14 @@ chmod +x fab.py
 alias fab="/path/to/fab.py"
 ```
 
-
-Usage:
+## Help
 
 ```
 fab --help
 fab SUBCOMMAND --help
 ```
 
-Examples:
+## Examples
 
 ```
 fab create                                   # create a new issue, opens editor
