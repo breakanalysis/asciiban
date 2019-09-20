@@ -7,12 +7,6 @@ The 'status' key has predefined usage as columns of a kanban board.
 A kanban layout is given by an ordered list of column names, but by default the list
 is ['backlog', 'selected', 'wip', 'blocked', 'done'].
 
-TODO: add max rows for kanban board and crud operations for the kanban boards.
-TODO: handle no issues dir
-TODO: implement escape sequences for dates
-TODO: nicer and more flexible views for the issues themselves
-TODO: implement priority field and sorting function(s)
-
 Certain subcommands (show, show-issues, edit, delete and tag) can be applied in batch to
 issues that match a specified filter. The filter is specified using command line arguments
 and giving values and expressions according to a simple syntax.

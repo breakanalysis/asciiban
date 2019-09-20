@@ -1,9 +1,12 @@
 from collections import defaultdict, Counter
 from constants import (ID, STATUS, BACKLOG, UPCOMING,
                        WIP, BLOCKED, DONE, TITLE, HABIT,
-                       SUCCESS, TRACK_RECORD, DUE_DATE)
+                       SUCCESS, TRACK_RECORD, DUE_DATE, MAX_BOARD_ROWS)
 from textwrap import wrap
 from datetime import datetime as dt
+from settings import get_settings
+
+settings = get_settings()
 
 def render_kanban(issues, statuses=None, box_width=15, box_rows=3):
     if statuses==None:
@@ -21,11 +24,15 @@ def render_kanban(issues, statuses=None, box_width=15, box_rows=3):
     lines.append(hline)
     if len(status_counter) == 0:
         return lines
-    for height in range(max(status_counter.values())):
+    board_height = max(status_counter.values())
+    for height in range(min(board_height, settings[MAX_BOARD_ROWS])):
         for sub_row in range(box_rows):
             line = '| ' + ' | '.join([fill_missing(rows[status], height, box_width, sub_row) for status in statuses]) + ' |'
             lines.append(line)
         lines.append(hline)
+    if board_height > settings[MAX_BOARD_ROWS]:
+        lines.append(' ...')
+        lines.append(' ...')
     return lines
 
 def fill_missing(col, ind, box_width, sub_row):

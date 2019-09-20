@@ -11,9 +11,12 @@ import regex
 import readchar
 from constants import (TITLE, CREATED, DESCRIPTION, DATE_FORMAT,
                        ID, STATUS, BACKLOG, INDENT, TAGS, DUE_DATE,
-                       HABIT, LOG, SUCCESS, DATE, TRACK_RECORD)
+                       HABIT, LOG, SUCCESS, DATE, TRACK_RECORD,
+                       DATADIR)
+from settings import get_settings
 
-issue_dir = os.path.join(os.getcwd(), 'issues')
+settings = get_settings()
+issue_dir = f"{settings[DATADIR]}/issues"
 
 def issues():
     return [parse_issue_file(filename) for filename in issue_files()]

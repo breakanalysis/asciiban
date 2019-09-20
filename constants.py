@@ -1,20 +1,30 @@
+# ISSUE FIELDS
 STATUS = 'status'
 TAGS = 'tags'
 DESCRIPTION = 'description'
+TITLE = 'title'
+ID = 'id'
+CREATED = 'created'
+LOG = 'log'
+HABIT = 'habit'
+DUE_DATE = 'due_date'
+TRACK_RECORD = 'track_record'
+# STATUS COLUMNS
 BACKLOG = 'backlog'
 UPCOMING = 'upcoming'
 WIP = 'wip'
 BLOCKED = 'blocked'
 DONE = 'done'
-TITLE = 'title'
-ID = 'id'
-CREATED = 'created'
-LOG = 'log'
+# HABIT RELATED
 SUCCESS = 'success'
+# INTERNAL
 DATE_FORMAT = '%y-%m-%d %H:%M:%S'
-DUE_DATE = 'due_date'
 DATE = 'date'
-HABIT = 'habit'
-USER_DATE_FORMATS = []
+# APPEARANCE
 INDENT = 2
-TRACK_RECORD = 'track_record'
+# SETTINGS
+ENV_DOTFILE = 'ASCIIBAN_DOTFILE'
+ENV_DATADIR = 'ASCIIBAN_DATADIR'
+# SETTINGS PROPERTIES
+DATADIR = 'data_dir'
+MAX_BOARD_ROWS = 'max_board_rows'
