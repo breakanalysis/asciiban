@@ -166,12 +166,12 @@ def _find_cutoff(expr, past=True):
             cutoff = dt.strptime(expr, date_fmt='%Y-%m-%d')
         except:
             raise Exception(f"Relative time point specification {expr} does not match ([0-9]+[YMwdhms])+ nor YEAR-MONTH-DAY.")
-    return cutoff
+    return cutoff, level
 
 def match_created(issue, expr):
     op = expr[0]
     expr = expr[1:]
-    cutoff = _find_cutoff(expr)
+    cutoff, level = _find_cutoff(expr)
     issue_time = round_time(issue[CREATED], level)
     if op == '=':
         return issue_time == cutoff
@@ -252,11 +252,11 @@ def create_cmd(issue_type='issue'):
     ids = [id_from_filename(filename) for filename in issue_files()]
     last_id = 0 if len(ids) == 0 else max(ids)
     id = last_id + 1
-    user_issue.update({CREATED: format_date(dt.utcnow()), ID: id})
+    user_issue.update({CREATED: format_date(dt.now()), ID: id})
     parent_id = user_issue['parent_id']
     del user_issue['parent_id']
     if DUE_DATE in user_issue:
-        user_issue[DUE_DATE] = _find_cutoff(user_issue[DUE_DATE], past=False)
+        user_issue[DUE_DATE], _ = _find_cutoff(user_issue[DUE_DATE], past=False)
     if not os.path.exists(issue_dir):
         os.mkdir(issue_dir)
     subtask_path = _subtask_path(parent_id, id)
@@ -381,9 +381,23 @@ def settings_cmd():
 def push_cmd():
     cmds = [['git', 'add', '.'], ['git', 'commit', '-m"Asciiban autocommit"'], ['git', 'push']]
     for cmd in cmds:
+        full_cmd = ' '.join(cmd)
         try:
-            ret = subprocess.run([cmd], cwd=settings[DATADIR])
+            ret = subprocess.run(cmd, cwd=settings[DATADIR])
         except:
-            raise Exception(f"Command: {cmd} failed.")
-        if ret != 0:
-            raise Exception(f"Command: {cmd} failed.")
+            raise Exception("Something went wrong with {}".format(full_cmd))
+        if ret.returncode != 0:
+            return
+
+def pull_cmd():
+    cmd = ['git', 'pull']
+    full_cmd = ' '.join(cmd)
+    try:
+        ret = subprocess.run(cmd, cwd=settings[DATADIR])
+    except:
+        raise Exception("Something went wrong with {}".format(full_cmd))
+
+def git_status_cmd():
+    cmd = ['git', 'status']
+    full_cmd = ' '.join(cmd)
+    ret = subprocess.run(cmd, cwd=settings[DATADIR])

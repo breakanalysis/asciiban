@@ -5,7 +5,7 @@ from commands import (
         show_cmd, create_cmd, edit_cmd, delete_cmd,
         show_issues_cmd, tag_cmd, subtask_cmd,
         rename_cmd, transition_cmd, log_cmd, settings_cmd,
-        push_cmd)
+        push_cmd, pull_cmd, git_status_cmd)
 import click
 from argparse import ArgumentParser
 from constants import HABIT
@@ -74,6 +74,8 @@ if __name__=='__main__':
     log_parser = add_log_parser(sub_parsers)
     settings_parser = sub_parsers.add_parser("settings", help="Edit asciiban settings file.")
     push_parser = sub_parsers.add_parser("push", help="Push changes to git.")
+    push_parser = sub_parsers.add_parser("pull", help="Pull changes from git.")
+    git_status_parser = sub_parsers.add_parser("git-status", help="Pull changes from git.")
     add_filtering([show_parser, show_issues_parser, delete_parser, edit_parser, tag_parser, subtask_parser,
                    transition_parser])
     args = parser.parse_args()
@@ -104,5 +106,9 @@ if __name__=='__main__':
         settings_cmd()
     elif command == 'push':
         push_cmd()
+    elif command == 'pull':
+        pull_cmd()
+    elif command == 'git-status':
+        git_status_cmd()
     else:
         pass
