@@ -12,8 +12,8 @@ issues that match a specified filter. The filter is specified using command line
 and giving values and expressions according to a simple syntax.
 
 ## Filters
-- Id: -i, --id id
-- Status: -s, --status comma separated (prefixes of) statuses. The filter can be negated by adding ~: before.
+- Id: -i, --ids ids (comma separated, any will match)
+- Status: -s, --status comma separated (prefixes of) statuses, any will match. The filter can be negated by adding ~: before.
 - Creation date: -c, --created \[><=\]\(\[0-9\]\[YMdwhms\]\)+ or \[><=\]YEAR-MONTH-DAY
 - Tags: -T, --tags comma separated tag. The filter can be negated by adding ~: before.
 - Parent: -p, -parent id
@@ -67,6 +67,7 @@ fab edit -c ">2h30m" -c "<1h"                # edit issues created between 1h an
 fab delete -p 4                              # delete issues whose parent has id 4
 fab subtask 2 4                              # make issue 4 a subtask of issue 2
 fab tag -a 5 "food,china"                    # add tags food and china to all tasks descending from issue 5
+fab ls-tags -s wip                           # list all tags and counts for issues that are wip
 fab show-issues -t "food,japan"              # display detailed information about all tasks tagged with food or japan (or both)
 fab show-issues --no-details                 # show paths for all issues
 fab show-issues --no-path                    # show one json per line for all issues
@@ -75,4 +76,8 @@ fab log -i 1                                 # update log for issue 1
 fab create-habit                             # start a new healthy habit
 fab log -i 10                                # report success on issue 10 if it's a habit and update log
 fab transition -s wip done                   # transition all issues from wip to done
+fab git-status                               # show git status for data directory
+fab pull                                     # git pull changes from remote
+fab push                                     # git push changes to remote
 ```
+

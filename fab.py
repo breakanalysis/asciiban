@@ -5,14 +5,14 @@ from commands import (
         show_cmd, create_cmd, edit_cmd, delete_cmd,
         show_issues_cmd, tag_cmd, subtask_cmd,
         rename_cmd, transition_cmd, log_cmd, settings_cmd,
-        push_cmd, pull_cmd, git_status_cmd)
+        push_cmd, pull_cmd, git_status_cmd, ls_tags_cmd)
 import click
 from argparse import ArgumentParser
 from constants import HABIT
 
 def add_filtering(parsers):
     for parser in parsers:
-        parser.add_argument('-i', '--id', type=int, help="Match issue with given id.")
+        parser.add_argument('-i', '--ids', help="Match issues with whose id is in comma separated list of ids IDS.")
         parser.add_argument('-s', '--status', help="Match issues whose status matches any of given comma separated statuses. May be repeated.")
         parser.add_argument('-T', '--tags', action='append', help="Match issues that have at least one tag among the comma separated tags in TAGS. May be repeated.")
         # parser.add_argument('-D', '--due-date', action='append', help="")
@@ -76,8 +76,9 @@ if __name__=='__main__':
     push_parser = sub_parsers.add_parser("push", help="Push changes to git.")
     push_parser = sub_parsers.add_parser("pull", help="Pull changes from git.")
     git_status_parser = sub_parsers.add_parser("git-status", help="Pull changes from git.")
+    ls_tags_parser = sub_parsers.add_parser("ls-tags", help="List counts of tags of issues matching filter.")
     add_filtering([show_parser, show_issues_parser, delete_parser, edit_parser, tag_parser, subtask_parser,
-                   transition_parser])
+                   transition_parser, ls_tags_parser])
     args = parser.parse_args()
     command = args.command
     if command == 'show-issues':
@@ -110,5 +111,7 @@ if __name__=='__main__':
         pull_cmd()
     elif command == 'git-status':
         git_status_cmd()
+    elif command == 'ls-tags':
+        ls_tags_cmd(args)
     else:
         pass

@@ -1,6 +1,7 @@
 import os
 import glob
 import json
+from collections import Counter
 from datetime import datetime as dt
 from dateutil.relativedelta import relativedelta
 from render import render_kanban
@@ -28,6 +29,8 @@ def parse_issue_file(filename):
             issue[TAGS] = set(issue[TAGS])
         else:
             issue[TAGS] = set()
+    if DESCRIPTION not in issue:
+        issue[DESCRIPTION] = ""
     return issue
 
 def datetime_parser(dct):
@@ -77,7 +80,7 @@ def matching_issues(args):
 
 def match_issue(issue, args):
     return all([
-        not args.id or match_id(issue, args.id),
+        not args.ids or match_id(issue, args.ids),
         not args.status or match_status(issue, args.status),
         not args.tags or all(match_tags(issue, expr) for expr in args.tags),
         not args.created or all(match_created(issue, expr) for expr in args.created),
@@ -88,8 +91,8 @@ def match_issue(issue, args):
         not args.parent or match_parent(issue, args.parent)
     ])
 
-def match_id(issue, id):
-    return issue['id'] == id
+def match_id(issue, ids):
+    return any(issue['id'] == int(id) for id in ids.split(','))
 
 def match_status(issue, statuses):
     is_negated = _is_negated(statuses)
@@ -188,7 +191,7 @@ def match_ancestor(issue, ancestor_id):
 def fuzzy_match(expr, text):
     pattern1 = ' '.join(f"({e})" + "{e<=1}" for e in expr.split(' '))
     pattern2 = f"({expr})" + "{e<=" + f"{round(len(expr)*0.15)}" + "}"
-    return bool(regex.match(pattern1, text) or regex.match(pattern2, text))
+    return bool(regex.search(pattern1, text) or regex.search(pattern2, text))
 
 def match_generic(issue_func):
     def decorated(issue, expr):
@@ -401,3 +404,9 @@ def git_status_cmd():
     cmd = ['git', 'status']
     full_cmd = ' '.join(cmd)
     ret = subprocess.run(cmd, cwd=settings[DATADIR])
+
+def ls_tags_cmd(args):
+    tags = Counter()
+    for issue in matching_issues(args):
+        tags.update(issue[TAGS])
+    print(dict(tags))
