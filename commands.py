@@ -377,3 +377,13 @@ def settings_cmd():
             for line in contents:
                 f.write(line + '\n')
     subprocess.run([settings[EDITOR], dotfile])
+
+def push_cmd():
+    cmds = [['git', 'add', '.'], ['git', 'commit', '-m"Asciiban autocommit"'], ['git', 'push']]
+    for cmd in cmds:
+        try:
+            ret = subprocess.run([cmd], cwd=settings[DATADIR])
+        except:
+            raise Exception(f"Command: {cmd} failed.")
+        if ret != 0:
+            raise Exception(f"Command: {cmd} failed.")

@@ -4,8 +4,8 @@ from datetime import datetime
 from commands import (
         show_cmd, create_cmd, edit_cmd, delete_cmd,
         show_issues_cmd, tag_cmd, subtask_cmd,
-        rename_cmd, transition_cmd, log_cmd, settings_cmd
-        )
+        rename_cmd, transition_cmd, log_cmd, settings_cmd,
+        push_cmd)
 import click
 from argparse import ArgumentParser
 from constants import HABIT
@@ -73,6 +73,7 @@ if __name__=='__main__':
     add_rename_parser(sub_parsers)
     log_parser = add_log_parser(sub_parsers)
     settings_parser = sub_parsers.add_parser("settings", help="Edit asciiban settings file.")
+    push_parser = sub_parsers.add_parser("push", help="Push changes to git.")
     add_filtering([show_parser, show_issues_parser, delete_parser, edit_parser, tag_parser, subtask_parser,
                    transition_parser])
     args = parser.parse_args()
@@ -101,5 +102,7 @@ if __name__=='__main__':
         log_cmd(args)
     elif command == 'settings':
         settings_cmd()
+    elif command == 'push':
+        push_cmd()
     else:
         pass
