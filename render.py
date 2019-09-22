@@ -1,16 +1,16 @@
 from collections import defaultdict, Counter
-from constants import (ID, STATUS, BACKLOG, UPCOMING,
-                       WIP, BLOCKED, DONE, TITLE, HABIT,
-                       SUCCESS, TRACK_RECORD, DUE_DATE, MAX_BOARD_ROWS)
+from constants import (ID, TITLE, HABIT, SUCCESS, TRACK_RECORD,
+                       DUE_DATE, MAX_BOARD_ROWS, STATUS_COLUMNS, STATUS)
 from textwrap import wrap
 from datetime import datetime as dt
-from settings import get_settings
+from settings import get_settings, get_board_settings
 
 settings = get_settings()
+board_settings = get_board_settings()
 
-def render_kanban(issues, statuses=None, box_width=15, box_rows=3):
-    if statuses==None:
-        statuses = [BACKLOG, UPCOMING, WIP, BLOCKED, DONE]
+
+def render_kanban(issues, box_width=15, box_rows=3):
+    statuses = board_settings[STATUS_COLUMNS]
     rows = defaultdict(list)
     status_counter = Counter()
     for issue in issues:

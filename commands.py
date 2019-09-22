@@ -3,6 +3,7 @@ import glob
 import json
 from collections import Counter
 from datetime import datetime as dt
+from datetime import timedelta as td
 from dateutil.relativedelta import relativedelta
 from render import render_kanban
 from tempfile import NamedTemporaryFile
@@ -10,14 +11,12 @@ import subprocess
 import re
 import regex
 import readchar
-from constants import (TITLE, CREATED, DESCRIPTION, DATE_FORMAT,
-                       ID, STATUS, BACKLOG, INDENT, TAGS, DUE_DATE,
-                       HABIT, LOG, SUCCESS, DATE, TRACK_RECORD,
-                       DATADIR, EDITOR, MAX_BOARD_ROWS)
-from settings import get_settings, get_dotfile
+from constants import *
+from settings import (get_settings, get_dotfile, get_board_settings, get_board_settings_file,
+                      default_settings, default_board_settings)
+from sorting import get_sort_value
 
-settings = get_settings()
-issue_dir = f"{settings[DATADIR]}/issues"
+issue_dir = f"{get_settings()[DATADIR]}/issues"
 
 def issues():
     return [parse_issue_file(filename) for filename in issue_files()]
@@ -267,7 +266,7 @@ def create_cmd(issue_type='issue'):
     print(f"Created issue {id} at {subtask_path}")
 
 def _input_user_issue(path):
-    subprocess.run([settings[EDITOR], path])
+    subprocess.run([get_settings()[EDITOR], path])
     with open(path, 'r') as fin:
         edited_contents = fin.read()
     if not edited_contents.isspace():
@@ -277,10 +276,15 @@ def _input_user_issue(path):
             print("Not valid json, please try again.")
             input("Press ENTER to continue.")
             _input_user_issue(path)
-        if 'title' not in user_json or not isinstance(user_json['title'], str) or user_json['title'] == '':
+        if TITLE not in user_json or not isinstance(user_json[TITLE], str) or user_json[TITLE] == '':
             print("Must use non-empty string value for attribute title.")
             input("Press ENTER to continue.")
             _input_user_issue(path)
+        if STATUS not in user_issue or user_issue[STATUS] not in get_board_settings()[STATUS_COLUMNS]:
+            print(f"Must have status with a value in {get_board_settings()[STATUS_COLUMNS]}.")
+            input("Press ENTER to continue.")
+            _input_user_issue(path)
+
         return user_json
     else:
         return None
@@ -335,12 +339,15 @@ def rename_cmd(args):
     save_issue(issue)
 
 def transition_cmd(args):
+    if args.new_status not in get_board_settings()[STATUS_COLUMNS]:
+        print(f"Must use status with a value in {get_board_settings()[STATUS_COLUMNS]}.")
+        return
     for issue in matching_issues(args):
         issue[STATUS] = args.new_status
         save_issue(issue)
 
 def _user_edit_file(path):
-    subprocess.run([settings[EDITOR], path])
+    subprocess.run([get_settings()[EDITOR], path])
     with open(path, 'r') as fin:
         edited_contents = fin.read()
     return edited_contents
@@ -370,23 +377,77 @@ def log_cmd(args):
     issue[LOG] = log
     save_issue(issue)
 
+def edit_and_validate_settings(dotfile):
+    subprocess.run([get_settings()[EDITOR], dotfile])
+    try:
+        get_settings()
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
 def settings_cmd():
     dotfile = get_dotfile()
     if not os.path.exists(dotfile):
+        defaults = default_settings()
+        contents = [f"#{k}={defaults[k]}" for k in defaults]
         with open(dotfile, 'w') as f:
-            contents = [f"#{MAX_BOARD_ROWS}=20",
-                        f"#{DATADIR}={os.environ.get('HOME', '/home/your-user')}/.asciiban.d",
-                        f"#{EDITOR}=vi"]
-            for line in contents:
-                f.write(line + '\n')
-    subprocess.run([settings[EDITOR], dotfile])
+             for line in contents:
+                 f.write(line + '\n')
+    while not edit_and_validate_settings(dotfile):
+        input("Press enter to try again.")
+
+def edit_and_validate_board_settings(board_settings_file):
+    subprocess.run([get_settings()[EDITOR], board_settings_file])
+    try:
+        get_board_settings()
+    except Exception as e:
+        print(e)
+        return False
+    return check_defaults() and test_sorting()
+
+def test_sorting():
+    issue = {ID: 0}
+    try:
+        v = get_sort_value(issue)
+    except Exception as e:
+        print(e)
+        import pdb; pdb.set_trace()
+        return False
+    return True
+
+def check_defaults():
+    board_settings = get_board_settings()
+    FIELD = r'[a-zA-Z_][a-zA-Z0-9_]*'
+    used_fields = set(re.findall(FIELD, board_settings[BACKLOG_SORTING]))
+    fields_with_defaults = set(board_settings[CUSTOM_FIELDS])
+    missing_defaults = used_fields - fields_with_defaults - {CREATED}
+    if len(missing_defaults) > 0:
+        print(f"Fields {list(missing_defaults)} in {BACKLOG_SORTING} do not have defaults in {CUSTOM_FIELDS}.")
+        return False
+    return True
+
+def board_settings_cmd():
+    board_settings_file = get_board_settings_file()
+    if not os.path.exists(board_settings_file):
+        defaults = default_board_settings()
+        with open(board_settings_file, 'w') as f:
+            for key in defaults:
+                if key == STATUS_COLUMNS:
+                    f.write("#{key}={rhs}\n".format(key=key, rhs=",".join([str(v) for v in defaults[key]])))
+                elif key == CUSTOM_FIELDS:
+                    f.write("#{key}={rhs}\n".format(key=key, rhs=",".join([f"{k}:{v}" for k, v in defaults[key].items()])))
+                else:
+                    f.write("#{key}={rhs}\n".format(key=key, rhs=defaults[key]))
+    while not edit_and_validate_board_settings(board_settings_file):
+        input("Press enter to try again.")
 
 def push_cmd():
     cmds = [['git', 'add', '.'], ['git', 'commit', '-m"Asciiban autocommit"'], ['git', 'push']]
     for cmd in cmds:
         full_cmd = ' '.join(cmd)
         try:
-            ret = subprocess.run(cmd, cwd=settings[DATADIR])
+            ret = subprocess.run(cmd, cwd=get_settings()[DATADIR])
         except:
             raise Exception("Something went wrong with {}".format(full_cmd))
         if ret.returncode != 0:
@@ -396,14 +457,20 @@ def pull_cmd():
     cmd = ['git', 'pull']
     full_cmd = ' '.join(cmd)
     try:
-        ret = subprocess.run(cmd, cwd=settings[DATADIR])
+        ret = subprocess.run(cmd, cwd=get_settings()[DATADIR])
     except:
         raise Exception("Something went wrong with {}".format(full_cmd))
 
-def git_status_cmd():
+def status_cmd():
     cmd = ['git', 'status']
     full_cmd = ' '.join(cmd)
-    ret = subprocess.run(cmd, cwd=settings[DATADIR])
+    ret = subprocess.run(cmd, cwd=get_settings()[DATADIR])
+
+def diff_cmd():
+    cmds = [['git', 'add', '.'], ['git', 'diff', '--cached']]
+    for cmd in cmds:
+        full_cmd = ' '.join(cmd)
+        ret = subprocess.run(cmd, cwd=get_settings()[DATADIR])
 
 def ls_tags_cmd(args):
     tags = Counter()

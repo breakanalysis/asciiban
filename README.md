@@ -39,6 +39,7 @@ and giving values and expressions according to a simple syntax.
 ## Data
 - Data resides in $ASCIIBAN_DATADIR or by default in $HOME/.asciiban.d
 - To persist issues use any method of your choice. If the data directory is a git repo, pushing and pulling can be done with ```fab push``` and ```fab pull```.
+- Issues are stored under the `issues` subfolder. The filename of an issue is equal to its id. The subtasks of issue N are stored under N.d/. Thus a path can become \<datadir\>/issues/1.d/5.d/3.
 
 ## Install
 
@@ -76,7 +77,8 @@ fab log -i 1                                 # update log for issue 1
 fab create-habit                             # start a new healthy habit
 fab log -i 10                                # report success on issue 10 if it's a habit and update log
 fab transition -s wip done                   # transition all issues from wip to done
-fab git-status                               # show git status for data directory
+fab status                                   # show git status for data directory
+fab diff                                     # show git diff for data directory
 fab pull                                     # git pull changes from remote
 fab push                                     # git push changes to remote
 ```

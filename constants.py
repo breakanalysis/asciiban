@@ -26,6 +26,10 @@ INDENT = 2
 ENV_DOTFILE = 'ASCIIBAN_DOTFILE'
 ENV_DATADIR = 'ASCIIBAN_DATADIR'
 EDITOR = 'editor'
+BOARD_SETTINGS_FILE = 'board.settings'
 # SETTINGS PROPERTIES
 DATADIR = 'data_dir'
 MAX_BOARD_ROWS = 'max_board_rows'
+BACKLOG_SORTING = 'backlog_sorting'
+CUSTOM_FIELDS = 'custom_fields'
+STATUS_COLUMNS = 'status_columns'

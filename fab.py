@@ -5,10 +5,11 @@ from commands import (
         show_cmd, create_cmd, edit_cmd, delete_cmd,
         show_issues_cmd, tag_cmd, subtask_cmd,
         rename_cmd, transition_cmd, log_cmd, settings_cmd,
-        push_cmd, pull_cmd, git_status_cmd, ls_tags_cmd)
+        board_settings_cmd, push_cmd, pull_cmd, status_cmd,
+        diff_cmd, ls_tags_cmd)
 import click
 from argparse import ArgumentParser
-from constants import HABIT
+from constants import HABIT, DATADIR, EDITOR, MAX_BOARD_ROWS, BACKLOG_SORTING, CUSTOM_FIELDS, STATUS_COLUMNS
 
 def add_filtering(parsers):
     for parser in parsers:
@@ -72,10 +73,12 @@ if __name__=='__main__':
     transition_parser = add_transition_parser(sub_parsers)
     add_rename_parser(sub_parsers)
     log_parser = add_log_parser(sub_parsers)
-    settings_parser = sub_parsers.add_parser("settings", help="Edit asciiban settings file.")
+    settings_parser = sub_parsers.add_parser("settings", help=f"Edit asciiban settings file; settings are {MAX_BOARD_ROWS}, {DATADIR} and {EDITOR}.")
+    board_settings_parser = sub_parsers.add_parser("board-settings", help=f"Edit settings for kanban board; settings are {BACKLOG_SORTING}, {CUSTOM_FIELDS} and {STATUS_COLUMNS}.")
     push_parser = sub_parsers.add_parser("push", help="Push changes to git.")
     push_parser = sub_parsers.add_parser("pull", help="Pull changes from git.")
-    git_status_parser = sub_parsers.add_parser("git-status", help="Pull changes from git.")
+    status_parser = sub_parsers.add_parser("status", help="Show git status.")
+    diff_parser = sub_parsers.add_parser("diff", help="Show git diff.")
     ls_tags_parser = sub_parsers.add_parser("ls-tags", help="List counts of tags of issues matching filter.")
     add_filtering([show_parser, show_issues_parser, delete_parser, edit_parser, tag_parser, subtask_parser,
                    transition_parser, ls_tags_parser])
@@ -105,12 +108,16 @@ if __name__=='__main__':
         log_cmd(args)
     elif command == 'settings':
         settings_cmd()
+    elif command == 'board-settings':
+        board_settings_cmd()
     elif command == 'push':
         push_cmd()
     elif command == 'pull':
         pull_cmd()
-    elif command == 'git-status':
-        git_status_cmd()
+    elif command == 'status':
+        status_cmd()
+    elif command == 'diff':
+        diff_cmd()
     elif command == 'ls-tags':
         ls_tags_cmd(args)
     else:
