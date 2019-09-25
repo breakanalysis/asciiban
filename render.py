@@ -1,16 +1,17 @@
 from collections import defaultdict, Counter
-from constants import (ID, TITLE, HABIT, SUCCESS, TRACK_RECORD,
-                       DUE_DATE, MAX_BOARD_ROWS, STATUS_COLUMNS, STATUS)
+from constants import *
 from textwrap import wrap
 from datetime import datetime as dt
 from settings import get_settings, get_board_settings
+from sorting import get_sort_value
 
-settings = get_settings()
-board_settings = get_board_settings()
-
-
-def render_kanban(issues, box_width=15, box_rows=3):
-    statuses = board_settings[STATUS_COLUMNS]
+def render_kanban(issues):
+    # generator can only be traversed once
+    issues = list(issues)
+    issues.sort(key=lambda issue: -get_sort_value(issue))
+    box_rows=get_settings()[BOX_ROWS]
+    box_width=get_settings()[BOX_WIDTH]
+    statuses = get_board_settings()[STATUS_COLUMNS]
     rows = defaultdict(list)
     status_counter = Counter()
     for issue in issues:
@@ -25,12 +26,12 @@ def render_kanban(issues, box_width=15, box_rows=3):
     if len(status_counter) == 0:
         return lines
     board_height = max(status_counter.values())
-    for height in range(min(board_height, settings[MAX_BOARD_ROWS])):
+    for height in range(min(board_height, get_settings()[MAX_BOARD_ROWS])):
         for sub_row in range(box_rows):
             line = '| ' + ' | '.join([fill_missing(rows[status], height, box_width, sub_row) for status in statuses]) + ' |'
             lines.append(line)
         lines.append(hline)
-    if board_height > settings[MAX_BOARD_ROWS]:
+    if board_height > get_settings()[MAX_BOARD_ROWS]:
         lines.append(' ...')
         lines.append(' ...')
     return lines

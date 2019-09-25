@@ -188,9 +188,10 @@ def match_ancestor(issue, ancestor_id):
     return get_issue_path(issue).startswith(get_id_path(ancestor_id) + '.d')
 
 def fuzzy_match(expr, text):
+    expr = expr.lower()
     pattern1 = ' '.join(f"({e})" + "{e<=1}" for e in expr.split(' '))
     pattern2 = f"({expr})" + "{e<=" + f"{round(len(expr)*0.15)}" + "}"
-    return bool(regex.search(pattern1, text) or regex.search(pattern2, text))
+    return bool(regex.search(pattern1, text.lower()) or regex.search(pattern2, text.lower()))
 
 def match_generic(issue_func):
     def decorated(issue, expr):
@@ -275,16 +276,15 @@ def _input_user_issue(path):
         except Exception as e:
             print("Not valid json, please try again.")
             input("Press ENTER to continue.")
-            _input_user_issue(path)
+            return _input_user_issue(path)
         if TITLE not in user_json or not isinstance(user_json[TITLE], str) or user_json[TITLE] == '':
             print("Must use non-empty string value for attribute title.")
             input("Press ENTER to continue.")
-            _input_user_issue(path)
-        if STATUS not in user_issue or user_issue[STATUS] not in get_board_settings()[STATUS_COLUMNS]:
+            return _input_user_issue(path)
+        if STATUS not in user_json or user_json[STATUS] not in get_board_settings()[STATUS_COLUMNS]:
             print(f"Must have status with a value in {get_board_settings()[STATUS_COLUMNS]}.")
             input("Press ENTER to continue.")
-            _input_user_issue(path)
-
+            return _input_user_issue(path)
         return user_json
     else:
         return None

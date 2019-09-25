@@ -1,6 +1,4 @@
-from constants import (ENV_DATADIR, ENV_DOTFILE, DATADIR, MAX_BOARD_ROWS,
-                       EDITOR, BOARD_SETTINGS_FILE, BACKLOG_SORTING, CUSTOM_FIELDS,
-                       BACKLOG, UPCOMING, WIP, BLOCKED, DONE, STATUS_COLUMNS)
+from constants import *
 import os
 import re
 
@@ -56,6 +54,8 @@ def board_settings_postprocessor(settings, line_nr):
 def default_settings():
     # MAYBE TODO: customizable dateformatting
     return {MAX_BOARD_ROWS: 20,
+            BOX_WIDTH: 15,
+            BOX_ROWS: 4,
             DATADIR: os.environ.get(ENV_DATADIR, os.path.join(os.environ.get('HOME'), '.asciiban.d')),
             EDITOR: 'vi'}
 
@@ -65,8 +65,8 @@ def get_settings():
     return settings
 
 def default_board_settings():
-    return {BACKLOG_SORTING: '100*urgency + value/estimate',
-            CUSTOM_FIELDS: {},
+    return {BACKLOG_SORTING: '100*urgency - created + value/estimate',
+            CUSTOM_FIELDS: {'urgency': 2, 'value': 2, 'estimate': 2},
             STATUS_COLUMNS: [BACKLOG, UPCOMING, WIP, BLOCKED, DONE]}
 
 def get_board_settings():

@@ -83,7 +83,7 @@ class CalcParser(Parser):
         if p.FIELD in self.issue:
             value = self.issue[p.FIELD]
             if isinstance(value, datetime):
-                return (value.date() - datetime.now().date()).days
+                return (value - datetime.now()).total_seconds()/24/3600
             return value
         elif p.FIELD in self.custom_fields:
             return self.custom_fields[p.FIELD]
